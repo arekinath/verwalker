@@ -1,0 +1,72 @@
+#!/usr/bin/env node
+
+var restify = require('restify-clients');
+var stream = require('stream');
+var util = require('util');
+var querystring = require('querystring');
+var assert = require('assert-plus');
+var vasync = require('vasync');
+var dashdash = require('dashdash');
+var fs = require('fs');
+
+assert.strictEqual(require.main, module);
+
+var USER = 'joyent';
+
+var options = [];
+options.push({
+	names: ['help', 'h'],
+	type: 'bool',
+	help: 'Shows this help text'
+});
+options.push({
+	names: ['index-file', 'f'],
+	type: 'string',
+	help: 'Path to index cache file'
+});
+
+var parser = dashdash.createParser({
+	options: options
+});
+try {
+	var opts = parser.parse(process.argv);
+} catch (e) {
+	console.error('verwalker: error: %s' + e.message);
+	process.exit(1);
+}
+
+var args = opts._args;
+var subcommand = args.shift();
+
+var handlers = {};
+handlers.index = require('./lib/cmd-index');
+handlers.deps = require('./lib/cmd-deps');
+handlers.revdeps = require('./lib/cmd-revdeps');
+
+if (!subcommand || opts.help) {
+	var help = parser.help({}).trimRight();
+	console.error('verwalker: tool for walking deps and version in npm repos');
+	console.error('\nsubcommands:');
+	console.error('  verwalker index');
+	console.error('  verwalker deps <package name | repo>');
+	console.error('  verwalker revdeps <package name | repo>');
+	console.error('\noptions:');
+	console.error(help);
+	process.exit(1);
+}
+
+if (!handlers[subcommand]) {
+	console.error('verwalker: unknown subcommand "%s"', subcommand);
+	process.exit(1);
+}
+
+if (!opts['index-file'])
+	opts['index-file'] = 'vwcache.json';
+
+var index;
+if (subcommand !== 'index') {
+	index = JSON.parse(fs.readFileSync(opts['index-file']).
+	    toString('utf-8'));
+}
+
+handlers[subcommand](opts, args, index);
