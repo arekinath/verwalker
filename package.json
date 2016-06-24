@@ -4,13 +4,15 @@
   "description": "",
   "main": "verwalker.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepublish": "pegjs lib/gitmodules.pegjs lib/gitmodules.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "assert-plus": "^1.0.0",
     "dashdash": "^1.12.2",
+    "pegjs": "^0.9.0",
     "restify-clients": "^1.1.2",
     "semver": "^5.1.0",
     "vasync": "^1.6.3"
